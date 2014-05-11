@@ -31,6 +31,10 @@
             color: #ffffff;
         }
 
+        div#vim_terminal {
+            display: inline-block;
+        }
+
         .terminal-cursor {
             color: #000;
             background: #f0f0f0;
@@ -80,16 +84,12 @@
 
                 function init() {
                     term = new Terminal({
-                        cols: Math.floor((window.innerWidth - 24) / 8) - 2,
-                        rows: Math.floor((window.innerHeight - 48) / 16) - 2,
+                        cols: Math.floor((window.innerWidth - 10) / 8) - 2,
+                        rows: Math.floor((window.innerHeight - 10) / 16),
                         screenKeys: true,
                     });
                     term.open(document.getElementById("vim_terminal"));
                     term.on('data', function(data) {
-                        if (!connected) {
-                            connected = true;
-                            connect_to_ws();
-                        }
                         sock.send("0" + data);
                         setTimeout(function() {
                             sock.send(" ");
@@ -101,11 +101,12 @@
                         sock.send("1" + x + "," + y);
                     }
                     term.fixResize = function() {
-                        var cols = Math.floor((window.innerWidth - 24) / 8);
-                        var rows = Math.floor((window.innerHeight - 48) / 16);
+                        var cols = Math.floor((window.innerWidth - 10) / 8) - 2;
+                        var rows = Math.floor((window.innerHeight - 10) / 16);
                         term.resize(cols, rows)
                     }
                     term.urlify = function() {
+                        return;
                         $("span").each(function(inxex, element) {
                             if (element.innerText.indexOf("|") == -1) {
                                 element.innerHTML = element.innerText.autoLink({target: "_blank"});
@@ -113,17 +114,22 @@
                         });
                     }
 
-                    term.write("root@brittg.sexy:/# vim -Z ./README.txt");
+                    if (!connected) {
+                        connect_to_ws();
+                        connected = true;
+                    }
 
-                    setTimeout(function(){
-                        $.ajax({
-                            url: "/static/default.txt",
-                            success: function(data) {
-                                term.write(data);
-                                term.urlify();
-                            },
-                        });
-                    }, 100);
+                    //term.write("root@brittg.sexy:/# vim -Z ./README.txt");
+
+                    //setTimeout(function(){
+                    //    $.ajax({
+                    //        url: "/static/default.txt",
+                    //        success: function(data) {
+                    //            term.write(data);
+                    //            term.urlify();
+                    //        },
+                    //    });
+                    //}, 100);
 
                     var rtime = new Date(1, 1, 2000, 12,00,00);
                     var timeout = false;
