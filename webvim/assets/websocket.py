@@ -4,7 +4,7 @@ from pyramid_sockjs.session import Session
 
 import termio
 
-command = "docker run -i -t vim_base %s"
+command = "docker run -i -t demophoon/vim_base %s"
 command %= "timelimit -pq -T 600 -S 9 vim -Z ./README.md"
 
 
