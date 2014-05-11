@@ -80,8 +80,8 @@
 
                 function init() {
                     term = new Terminal({
-                        cols: Math.floor((window.innerWidth - 24) / 8),
-                        rows: Math.floor((window.innerHeight - 48) / 16),
+                        cols: Math.floor((window.innerWidth - 24) / 8) - 2,
+                        rows: Math.floor((window.innerHeight - 48) / 16) - 2,
                         screenKeys: true,
                     });
                     term.open(document.getElementById("vim_terminal"));
