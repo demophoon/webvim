@@ -27,6 +27,10 @@
             background: #121212 !important;
         }
 
+        .terminal a, .terminal a:hover, .terminal a:active, .terminal a:visited {
+            color: #ffffff;
+        }
+
         .terminal-cursor {
             color: #000;
             background: #f0f0f0;
@@ -34,6 +38,7 @@
     </style>
 
     <script type="text/javascript" charset="utf-8" src="/static/js/term.js"></script>
+    <script type="text/javascript" charset="utf-8" src="/static/js/autolink-min.js"></script>
     <script type="text/javascript" src="http://cdn.brittg.com/js/jquery.js"></script>
     <script src="http://cdn.sockjs.org/sockjs-0.3.min.js"></script>
 
@@ -46,26 +51,49 @@
         <script type="text/javascript" charset="utf-8">
 
             (function() {
-                function init() {
-                    var term = new Terminal({
-                        cols: 120,
-                        rows: 40,
-                        screenKeys: true,
-                    });
-                    var sock = new SockJS('/terminal');
+                var sock;
+                var term;
+                var connected = false;
+
+                function connect_to_ws() {
+                    sock = new SockJS('/terminal');
                     sock.onopen = function() {
                         term.fixResize();
                         sock.ready = true;
                     };
                     sock.onmessage = function(e) {
-                        term.write(e.data);
+                        if (e.data) {
+                            term.write(e.data);
+                            term.urlify();
+                        }
                     };
                     sock.onclose = function() {
                         sock.ready = false;
                     };
+                    sock.keepAlive = setInterval(function() {
+                        if (sock.ready) {
+                            sock.send(" ");
+                        }
+                    }, 5000);
+
+                }
+
+                function init() {
+                    term = new Terminal({
+                        cols: Math.floor((window.innerWidth - 24) / 8),
+                        rows: Math.floor((window.innerHeight - 48) / 16),
+                        screenKeys: true,
+                    });
                     term.open(document.getElementById("vim_terminal"));
                     term.on('data', function(data) {
+                        if (!connected) {
+                            connected = true;
+                            connect_to_ws();
+                        }
                         sock.send("0" + data);
+                        setTimeout(function() {
+                            sock.send(" ");
+                        }, 100);
                     });
                     term._resize = term.resize;
                     term.resize = function(x, y) {
@@ -77,11 +105,25 @@
                         var rows = Math.floor((window.innerHeight - 48) / 16);
                         term.resize(cols, rows)
                     }
-                    sock.keepAlive = setInterval(function() {
-                        if (sock.ready) {
-                            sock.send(" ");
-                        }
-                    }, 500);
+                    term.urlify = function() {
+                        $("span").each(function(inxex, element) {
+                            if (element.innerText.indexOf("|") == -1) {
+                                element.innerHTML = element.innerText.autoLink({target: "_blank"});
+                            }
+                        });
+                    }
+
+                    term.write("root@brittg.sexy:/# vim -Z ./README.txt");
+
+                    setTimeout(function(){
+                        $.ajax({
+                            url: "/static/default.txt",
+                            success: function(data) {
+                                term.write(data);
+                                term.urlify();
+                            },
+                        });
+                    }, 100);
 
                     var rtime = new Date(1, 1, 2000, 12,00,00);
                     var timeout = false;
