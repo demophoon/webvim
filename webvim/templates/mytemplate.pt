@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Terminal Test Page</title>
+    <title>Britt Gresham's Vim Configurations</title>
 
     <link href='http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
 
@@ -146,6 +146,12 @@
 
                 }
 
+                console.log("====================================");
+                console.log("Ahh, so you are interested in how things work? Press G in Vim to go to the last few paragraphs to");
+                console.log("find out how this was pulled off. Also don't forget to checkout the repository for more information");
+                console.log("https://github.com/demophoon/webvim");
+                console.log("Also don't forget to check out my website! http://www.brittg.com/ Thanks :) -- Britt Gresham");
+                console.log("====================================");
                 $(document).ready(init);
             }());
 
