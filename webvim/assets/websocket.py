@@ -18,7 +18,7 @@ class TerminalClient(Session):
         self.timer = threading.Thread(target=self.send_new_data)
         while not self.mp.isalive():
             time.sleep(.1)
-        self.mp.resize(cols=120, rows=40)
+        self.mp.resize(cols=120, rows=40, ctrl_l=False)
         self.timer.start()
         pass
 
@@ -31,7 +31,7 @@ class TerminalClient(Session):
         if message[0] == "1":
             rows = message[1:].split(",")[0]
             cols = message[1:].split(",")[1]
-            self.mp.resize(int(cols), int(rows))
+            self.mp.resize(int(cols), int(rows), ctrl_l=False)
 
     def on_close(self):
         if self.mp.isalive():
