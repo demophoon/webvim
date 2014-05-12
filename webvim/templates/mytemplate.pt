@@ -54,9 +54,12 @@
 
         <script type="text/javascript" charset="utf-8">
 
+            var sock;
+            var term;
+
             (function() {
-                var sock;
-                var term;
+                //var sock;
+                //var term;
                 var connected = false;
 
                 function connect_to_ws() {
@@ -73,12 +76,9 @@
                     };
                     sock.onclose = function() {
                         sock.ready = false;
+                        term.reset();
+                        term.writeln("Session Disconnected.");
                     };
-                    sock.keepAlive = setInterval(function() {
-                        if (sock.ready) {
-                            sock.send(" ");
-                        }
-                    }, 5000);
 
                 }
 
@@ -106,7 +106,6 @@
                         term.resize(cols, rows)
                     }
                     term.urlify = function() {
-                        return;
                         $("span").each(function(inxex, element) {
                             if (element.innerText.indexOf("|") == -1) {
                                 element.innerHTML = element.innerText.autoLink({target: "_blank"});
