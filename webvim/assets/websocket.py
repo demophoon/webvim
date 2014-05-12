@@ -18,6 +18,13 @@ def create_session():
     return None
 
 
+def is_alive(session_id):
+    sessions = commands.getstatusoutput(
+        "docker ps | grep ago | awk '{print $1}'"
+    )[1].split("\n")
+    return session_id in sessions
+
+
 class TerminalClient(Session):
 
     def on_open(self):

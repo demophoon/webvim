@@ -4,15 +4,10 @@ import commands
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
 
-from webvim.assets.websocket import create_session
-
-
-def is_alive(session_id):
-    session_id = session_id[:12]
-    sessions = commands.getstatusoutput(
-        "docker ps | grep ago | awk '{print $1}'"
-    )[1].split("\n")
-    return session_id in sessions
+from webvim.assets.websocket import (
+    create_session,
+    is_alive,
+)
 
 
 @view_config(route_name='home')
