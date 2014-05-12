@@ -1,19 +1,29 @@
 import time
 import threading
+import commands
 
 from pyramid_sockjs.session import Session
 
 import termio
 
-command = "docker run -i -t demophoon/vim_base %s"
-command %= "timelimit -q -t 1800 -S 9 vim -Z ./README.md && exit"
+init_command = "docker run --networking=false -d -t demophoon/vim_base %s"
+init_command %= "timelimit -q -t 1800 -S 9 vim ./README.md && exit"
+connect_command = "docker attach %s"
+
+
+def create_session():
+    status = commands.getstatusoutput(init_command)
+    if status[0] == 0:
+        return status[1][:12]
+    return None
 
 
 class TerminalClient(Session):
 
     def on_open(self):
+        self.session_id = self.request.matchdict.get("session_id")
         self.last_update = time.time()
-        self.mp = termio.Multiplex(command)
+        self.mp = termio.Multiplex(connect_command % self.session_id)
         self.mp.spawn()
         self.timer = threading.Thread(target=self.send_new_data)
         while not self.mp.isalive():
@@ -34,9 +44,7 @@ class TerminalClient(Session):
             self.mp.resize(int(cols), int(rows), ctrl_l=False)
 
     def on_close(self):
-        if self.mp.isalive():
-            self.mp.writeline(u"\u001B\u001B:q!")
-        self.mp.terminate()
+        pass
 
     def send_new_data(self):
         while self.mp.isalive():
@@ -56,5 +64,4 @@ class TerminalClient(Session):
                 time.sleep(1)
             else:
                 time.sleep(.1)
-        self.mp.terminate()
         self.close()

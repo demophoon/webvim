@@ -12,6 +12,7 @@ def main(global_config, **settings):
 
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
-    config.add_sockjs_route(prefix='/terminal', session=TerminalClient)
+    config.add_route('terminal', '/{session_id}')
+    config.add_sockjs_route(prefix='/terminal/{session_id}', session=TerminalClient)
     config.scan()
     return config.make_wsgi_app()
