@@ -6,10 +6,10 @@ from pyramid_sockjs.session import Session
 
 import termio
 
-init_command = "docker run --networking=false -d -t demophoon/vim_base %s"
+init_command = "docker run --user=untrust --hostname='brittg.sexy' -w='/home/untrust' "
+init_command += "--env='HOME=/home/untrust' --networking=false -d -t demophoon/vim_base %s"
 init_command %= "timelimit -q -t 1800 -S 9 vim ./README.md && exit"
 connect_command = "docker attach %s"
-
 
 def create_session():
     status = commands.getstatusoutput(init_command)
