@@ -1,7 +1,8 @@
 #!/bin/sh
 
-containers=$(docker ps | grep '\([3-9][0-9] minutes\|hour\|day\)')
+containers=$(sudo docker ps -a | grep '\([3-9][0-9] minutes\|hour\|day\|Exit\)')
 
 if [ -n "$containers" ]; then
-    docker ps | grep '\([3-9][0-9] minutes\|hour\|day\)' | awk '{print $1}' | xargs docker kill
+    sudo docker ps -a | grep '\([3-9][0-9] minutes\|hour\|day\|Exit\)' | awk '{print $1}' | xargs sudo docker kill
+    sudo docker ps -a | grep '\([3-9][0-9] minutes\|hour\|day\|Exit\)' | awk '{print $1}' | xargs sudo docker rm
 fi
