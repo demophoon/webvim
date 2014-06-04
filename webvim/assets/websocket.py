@@ -6,10 +6,10 @@ from pyramid_sockjs.session import Session
 
 import termio
 
-init_command = "docker run --user=untrust --hostname='brittg.sexy' -w='/home/untrust' "
+init_command = "sudo docker run --user=untrust --hostname='brittg.sexy' -w='/home/untrust' "
 init_command += "--env='HOME=/home/untrust' --networking=false -d -t demophoon/vim_base %s"
 init_command %= "timelimit -q -t 1800 -S 9 vim ./README.md && exit"
-connect_command = "docker attach %s"
+connect_command = "sudo docker attach %s"
 
 def create_session():
     status = commands.getstatusoutput(init_command)
@@ -29,6 +29,8 @@ class TerminalClient(Session):
 
     def on_open(self):
         self.session_id = self.request.matchdict.get("session_id")
+        if self.session_id == "sandbox":
+            self.session_id = create_session()
         self.last_update = time.time()
         self.mp = termio.Multiplex(connect_command % self.session_id)
         self.mp.spawn()
