@@ -1,15 +1,19 @@
 import time
 import threading
 import commands
+from datetime import timedelta
 
 from pyramid_sockjs.session import Session
 
 import termio
 
-init_command = "sudo docker run --user=untrust --hostname='brittg.sexy' -w='/home/untrust' "
-init_command += "--env='HOME=/home/untrust' --networking=false -d -t demophoon/vim_base %s"
-init_command %= "timelimit -q -t 1800 -S 9 vim ./README.md && exit"
+init_command = "sudo docker run --user='untrust' "
+init_command += "--workdir='/home/untrust' "
+init_command += "--net='none' "
+init_command += "-dit demophoon/vim_base %s"
+init_command %= "vim ./README.md"
 connect_command = "sudo docker attach %s"
+
 
 def create_session():
     status = commands.getstatusoutput(init_command)
@@ -20,7 +24,7 @@ def create_session():
 
 def is_alive(session_id):
     sessions = commands.getstatusoutput(
-        "docker ps | grep ago | awk '{print $1}'"
+        "sudo docker ps | grep ago | awk '{print $1}'"
     )[1].split("\n")
     return session_id in sessions
 
@@ -31,6 +35,11 @@ class TerminalClient(Session):
         self.session_id = self.request.matchdict.get("session_id")
         if self.session_id == "sandbox":
             self.session_id = create_session()
+            self.request.response.set_cookie(
+                "session_id",
+                value=self.session_id,
+                max_age=timedelta(seconds=1800),
+            )
         self.last_update = time.time()
         self.mp = termio.Multiplex(connect_command % self.session_id)
         self.mp.spawn()
@@ -60,7 +69,7 @@ class TerminalClient(Session):
             output = None
             try:
                 output = self.mp.read()
-            except Exception, e:
+            except Exception:
                 pass
             current_time = time.time()
             if output:
