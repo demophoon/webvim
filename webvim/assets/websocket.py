@@ -1,15 +1,20 @@
+import gevent
+from gevent import monkey, Greenlet
+monkey.patch_all()
+
 import time
-import threading
 import commands
 
 from pyramid_sockjs.session import Session
 
 import termio
 
-init_command = "sudo docker run --user=untrust --hostname='brittg.sexy' -w='/home/untrust' "
-init_command += "--env='HOME=/home/untrust' --networking=false -d -t demophoon/vim_base %s"
+init_command = "sudo docker run --user=untrust --hostname='brittg.sexy' "
+init_command += "-w='/home/untrust' --env='HOME=/home/untrust' "
+init_command += "--net='none' -d -t demophoon/vim_base %s"
 init_command %= "timelimit -q -t 1800 -S 9 vim ./README.md && exit"
 connect_command = "sudo docker attach %s"
+
 
 def create_session():
     status = commands.getstatusoutput(init_command)
@@ -34,11 +39,10 @@ class TerminalClient(Session):
         self.last_update = time.time()
         self.mp = termio.Multiplex(connect_command % self.session_id)
         self.mp.spawn()
-        self.timer = threading.Thread(target=self.send_new_data)
         while not self.mp.isalive():
             time.sleep(.1)
         self.mp.resize(cols=120, rows=40, ctrl_l=False)
-        self.timer.start()
+        self.timer = Greenlet.spawn(self.send_new_data)
         pass
 
     def on_message(self, message):
@@ -60,7 +64,7 @@ class TerminalClient(Session):
             output = None
             try:
                 output = self.mp.read()
-            except Exception, e:
+            except Exception:
                 pass
             current_time = time.time()
             if output:
@@ -70,7 +74,7 @@ class TerminalClient(Session):
             if idle_time > 600:
                 break
             elif idle_time > 15:
-                time.sleep(1)
+                gevent.sleep(1)
             else:
-                time.sleep(.1)
+                gevent.sleep(.1)
         self.close()

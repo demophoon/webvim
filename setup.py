@@ -13,6 +13,7 @@ requires = [
     'pyramid_chameleon',
     'pyramid_debugtoolbar',
     'waitress',
+    'tornado',
     'gevent',
     'gevent-websocket==0.3.6',
     'pyramid_sockjs',
