@@ -12,8 +12,7 @@ import termio
 
 init_command = "sudo docker run "
 init_command += "--net='none' "
-init_command += "-dit demophoon/webvim %s"
-init_command %= "vim ./README.md"
+init_command += "-dit demophoon/webvim"
 connect_command = "sudo docker attach %s"
 
 
