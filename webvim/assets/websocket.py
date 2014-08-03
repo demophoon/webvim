@@ -10,10 +10,9 @@ from pyramid_sockjs.session import Session
 
 import termio
 
-init_command = "sudo docker run --user='untrust' "
-init_command += "--workdir='/home/untrust' "
+init_command = "sudo docker run "
 init_command += "--net='none' "
-init_command += "-dit demophoon/vim_base %s"
+init_command += "-dit demophoon/webvim %s"
 init_command %= "vim ./README.md"
 connect_command = "sudo docker attach %s"
 
