@@ -42,6 +42,9 @@ class TerminalClient(Session):
                 max_age=timedelta(seconds=1800),
             )
         self.last_update = time.time()
+        if not is_alive(self.session_id):
+            self.close()
+            return
         self.mp = termio.Multiplex(connect_command % self.session_id)
         self.mp.spawn()
         while not self.mp.isalive():
@@ -73,7 +76,12 @@ class TerminalClient(Session):
                 pass
             current_time = time.time()
             if output:
-                self.send(output)
+                try:
+                    output = unicode(output)
+                    self.send(output)
+                except Exception as e:
+                    print e
+                    pass
                 self.last_update = current_time
             idle_time = current_time - self.last_update
             if idle_time > 600:
