@@ -48,8 +48,8 @@
 
     <script type="text/javascript" charset="utf-8" src="/static/js/term.js"></script>
     <script type="text/javascript" charset="utf-8" src="/static/js/autolink-min.js"></script>
-    <script type="text/javascript" src="http://cdn.brittg.com/js/jquery.js"></script>
-    <script src="http://cdn.sockjs.org/sockjs-0.3.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-1.11.1.min.js"></script>
+    <script src="/static/js/sockjs.min.js"></script>
 
     </head>
     <body>
