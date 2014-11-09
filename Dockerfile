@@ -14,7 +14,7 @@ RUN git clone https://github.com/demophoon/vundle-headless-installer.git
 RUN ./dotfiles/setup.sh -f                               # Sets up symlinks for dotfiles
 RUN python ./vundle-headless-installer/install.py        # Installs Vundle plugins without running Vim
 
-ADD ./README.md /README.md
+ADD ./brittg.sexy.md /README.md
 
 ENTRYPOINT ["vim"]
 CMD ["README.md"]
