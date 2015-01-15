@@ -51,6 +51,12 @@ On the 1.0 Roadmap
 
 * [ ] Create a javascript library for embedding webvim into other websites.
 * [ ] More settings in configuration files like init_command, memory_limit, ect.
+* [ ] Better handling of data between client and server.
+** Smart handling of base64 encoded data when terminal sends characters that websockets does not support.
+
+Future
+------
+* [ ] Handle all unicode characters in the browser.
 
 Contributing
 ------------
