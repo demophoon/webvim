@@ -1,56 +1,61 @@
-import gevent
-from gevent import monkey, Greenlet
-monkey.patch_all()
-
 import time
+import base64
 import commands
-from datetime import timedelta
 
-from pyramid_sockjs.session import Session
+from sockjs.tornado import SockJSConnection
 
 import termio
 
-init_command = "sudo docker run "
-init_command += "--net='none' "
-init_command += "-dit demophoon/webvim"
-connect_command = "sudo docker attach %s"
 
+class TerminalClient(SockJSConnection):
 
-def create_session():
-    status = commands.getstatusoutput(init_command)
-    if status[0] == 0:
-        return status[1][:12]
-    return None
+    init_command = "docker run --net='none' -dit demophoon/webvim"
+    connect_command = "docker attach %s"
+    list_command = "docker ps -q --no-trunc"
 
+    @classmethod
+    def list_containers(self):
+        return commands.getstatusoutput(self.list_command)[1].split("\n")
 
-def is_alive(session_id):
-    sessions = commands.getstatusoutput(
-        "sudo docker ps | grep ago | awk '{print $1}'"
-    )[1].split("\n")
-    return session_id in sessions
+    @classmethod
+    def is_alive(self, session_id):
+        return any([x.startswith(session_id) for x in self.list_containers()])
 
+    @classmethod
+    def create_session(self):
+        status = commands.getstatusoutput(self.init_command)
+        if status[0] == 0:
+            container_id = status[1]
+            while not self.is_alive(container_id):
+                time.sleep(.1)
+            return container_id
+        return None
 
-class TerminalClient(Session):
+    def __init__(self, *args, **kwargs):
+        SockJSConnection.__init__(self, *args, **kwargs)
 
-    def on_open(self):
-        self.session_id = self.request.matchdict.get("session_id")
+    # Required Functions
+
+    def on_open(self, info):
+        self.session_id = info.get_cookie("term").value
         if self.session_id == "sandbox":
-            self.session_id = create_session()
-            self.request.response.set_cookie(
-                "session_id",
-                value=self.session_id,
-                max_age=timedelta(seconds=1800),
-            )
+            self.session_id = self.create_session()
         self.last_update = time.time()
-        if not is_alive(self.session_id):
+        if not self.is_alive(self.session_id):
             self.close()
             return
-        self.mp = termio.Multiplex(connect_command % self.session_id)
+        self.mp = termio.Multiplex(self.connect_command % self.session_id)
+        self.mp.add_callback(
+            self.mp.CALLBACK_UPDATE,
+            self.send_new_data,
+            'ws_update')
+        self.mp.add_callback(
+            self.mp.CALLBACK_EXIT,
+            self.close,
+            'ws_close')
         self.mp.spawn()
         while not self.mp.isalive():
             time.sleep(.1)
-        self.mp.resize(cols=120, rows=40, ctrl_l=False)
-        self.timer = Greenlet.spawn(self.send_new_data)
         pass
 
     def on_message(self, message):
@@ -60,34 +65,27 @@ class TerminalClient(Session):
         if message[0] == "0":
             self.mp.write(unicode(message[1:]))
         if message[0] == "1":
-            rows = message[1:].split(",")[0]
-            cols = message[1:].split(",")[1]
-            self.mp.resize(int(cols), int(rows), ctrl_l=False)
+            print "Resized"
+            items = message[1:].split(",")
+            cols = items[0]
+            rows = items[1]
+            time.sleep(.1)
+            self.mp.resize(int(rows), int(cols), ctrl_l=False)
+            print "Expected: %s" % (items, )
+            print "Actual:   %s" % ((self.mp.term.rows, self.mp.term.cols), )
 
     def on_close(self):
         pass
 
-    def send_new_data(self):
-        while self.mp.isalive():
-            output = None
-            try:
-                output = self.mp.read()
-            except Exception:
-                pass
-            current_time = time.time()
-            if output:
-                try:
-                    output = unicode(output)
-                    self.send(output)
-                except Exception as e:
-                    print e
-                    pass
-                self.last_update = current_time
-            idle_time = current_time - self.last_update
-            if idle_time > 600:
-                break
-            elif idle_time > 15:
-                gevent.sleep(1)
-            else:
-                gevent.sleep(.1)
-        self.close()
+    def send_new_data(self, stream=None):
+        if not self.mp.isalive():
+            self.close()
+            return
+        current_time = time.time()
+        if stream:
+            output = base64.b64encode(stream)
+            self.send(output)
+            self.last_update = current_time
+        idle_time = current_time - self.last_update
+        if idle_time > 600:
+            self.close()
