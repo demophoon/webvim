@@ -3971,6 +3971,7 @@ class Terminal(object):
                 # cutting off escape sequences at random.
                 return # Don't bother attempting to process anything else
         if cursorY >= self.rows:
+            return
             logging.error(_(
                 "cursorY >= self.rows!  This is either a bug or just a symptom "
                 "of the rate limiter kicking in."))

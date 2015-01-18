@@ -10,7 +10,7 @@ class EntrypointHandler(web.RequestHandler):
         if not TerminalClient.is_alive(self.get_cookie("term")):
             self.clear_cookie("term")
             self.set_cookie("term", TerminalClient.create_session())
-        self.redirect("/static/index.html")
+        self.render("templates/terminal.html")
 
 
 if __name__ == '__main__':

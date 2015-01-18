@@ -9,6 +9,7 @@ import termio
 
 class TerminalClient(SockJSConnection):
 
+    clients = set()
     init_command = "docker run --net='none' -dit demophoon/webvim"
     connect_command = "docker attach %s"
     list_command = "docker ps -q --no-trunc"
@@ -32,9 +33,15 @@ class TerminalClient(SockJSConnection):
         return None
 
     def __init__(self, *args, **kwargs):
+        self.rows = 24
+        self.cols = 80
         SockJSConnection.__init__(self, *args, **kwargs)
 
     # Required Functions
+
+    def resize_check(self):
+        if self.mp.term.rows != self.rows or self.mp.term.cols != self.cols:
+            self.mp.resize(self.rows, self.cols)
 
     def on_open(self, info):
         self.session_id = info.get_cookie("term").value
@@ -53,7 +60,14 @@ class TerminalClient(SockJSConnection):
             self.mp.CALLBACK_EXIT,
             self.close,
             'ws_close')
+
         self.mp.spawn()
+
+        self.mp.term.add_callback(
+            2,
+            self.resize_check,
+        )
+
         while not self.mp.isalive():
             time.sleep(.1)
         pass
@@ -65,14 +79,10 @@ class TerminalClient(SockJSConnection):
         if message[0] == "0":
             self.mp.write(unicode(message[1:]))
         if message[0] == "1":
-            print "Resized"
             items = message[1:].split(",")
-            cols = items[0]
-            rows = items[1]
-            time.sleep(.1)
-            self.mp.resize(int(rows), int(cols), ctrl_l=False)
-            print "Expected: %s" % (items, )
-            print "Actual:   %s" % ((self.mp.term.rows, self.mp.term.cols), )
+            self.cols = int(items[0])
+            self.rows = int(items[1])
+            self.mp.resize(self.rows, self.cols)
 
     def on_close(self):
         pass
