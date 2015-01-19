@@ -15,6 +15,9 @@ RUN ./dotfiles/setup.sh -f                               # Sets up symlinks for 
 RUN python ./vundle-headless-installer/install.py        # Installs Vundle plugins without running Vim
 
 ADD ./brittg.sexy.md /README.md
+ADD ./.vimrc.local /.vimrc.local
+RUN cat /.vimrc /.vimrc.local > /.vimrc.new
+RUN mv /.vimrc.new /dotfiles/.vimrc
 
 ENTRYPOINT ["vim"]
 CMD ["README.md"]
