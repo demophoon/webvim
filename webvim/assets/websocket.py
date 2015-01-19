@@ -101,9 +101,13 @@ class TerminalClient(SockJSConnection):
             return
         current_time = time.time()
         if stream:
-            output = base64.b64encode(stream)
-            self.send(output)
-            self.last_update = current_time
+            try:
+                msg = unicode(stream)
+                self.send("0" + msg)
+            except UnicodeDecodeError:
+                msg = base64.b64encode(stream)
+                self.send("1" + msg)
+        self.last_update = current_time
         idle_time = current_time - self.last_update
         if idle_time > 600:
             self.close()

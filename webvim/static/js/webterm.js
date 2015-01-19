@@ -11,8 +11,17 @@ var Webterm = function(api_endpoint, init_element) {
         };
         sock.onmessage = function(e) {
             if (e.data) {
-                var msg = atob(e.data);
-                term.write(msg);
+                var header = e.data[0];
+                e.data = e.data.substr(1);
+                switch (header) {
+                    case '0':
+                        term.write(e.data);
+                        break;
+                    case '1':
+                        var msg = atob(e.data);
+                        term.write(msg);
+                        break;
+                }
                 term.urlify();
             }
         };
