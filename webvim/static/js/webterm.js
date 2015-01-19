@@ -1,10 +1,10 @@
-var Webterm = function(init_element) {
+var Webterm = function(api_endpoint, init_element) {
     var sock;
     var term;
     var connected = false;
 
     function connect_to_ws() {
-        sock = new SockJS('/terminal');
+        sock = new SockJS(api_endpoint);
         sock.onopen = function() {
             sock.ready = true;
             term.fixResize();
@@ -82,7 +82,6 @@ var Webterm = function(init_element) {
             term.resize(sizes.cols, sizes.rows);
         }
         term.urlify = function() {
-            if (Browser.isIE) { return; };
             $("span").each(function(index, element) {
                 if (element.innerText.indexOf("|") == -1) {
                     element.innerHTML = element.innerText.autoLink({target: "_blank"});
