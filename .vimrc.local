@@ -10,3 +10,5 @@ imap <Right> <Right>
 imap <Down> <Down>
 
 set mouse=a
+
+let NERDTreeDirArrows=0
