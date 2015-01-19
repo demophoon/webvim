@@ -4,15 +4,17 @@ import commands
 
 from sockjs.tornado import SockJSConnection
 
+import terminal
 import termio
 
 
 class TerminalClient(SockJSConnection):
 
     clients = set()
-    init_command = "docker run --net='none' -dit demophoon/webvim"
-    connect_command = "docker attach %s"
-    list_command = "docker ps -q --no-trunc"
+
+    init_command = None
+    connect_command = None
+    list_command = None
 
     @classmethod
     def list_containers(self):
@@ -20,7 +22,10 @@ class TerminalClient(SockJSConnection):
 
     @classmethod
     def is_alive(self, session_id):
-        return any([x.startswith(session_id) for x in self.list_containers()])
+        if self.list_command:
+            return any([x.startswith(session_id) for x in self.list_containers()])
+        else:
+            return True
 
     @classmethod
     def create_session(self):
@@ -51,7 +56,11 @@ class TerminalClient(SockJSConnection):
         if not self.is_alive(self.session_id):
             self.close()
             return
-        self.mp = termio.Multiplex(self.connect_command % self.session_id)
+        try:
+            connecting_command = self.connect_command % self.session_id
+        except TypeError:
+            connecting_command = self.connect_command
+        self.mp = termio.Multiplex(connecting_command)
         self.mp.add_callback(
             self.mp.CALLBACK_UPDATE,
             self.send_new_data,
@@ -63,10 +72,7 @@ class TerminalClient(SockJSConnection):
 
         self.mp.spawn()
 
-        self.mp.term.add_callback(
-            2,
-            self.resize_check,
-        )
+        self.mp.term.add_callback(terminal.CALLBACK_CHANGED, self.resize_check)
 
         while not self.mp.isalive():
             time.sleep(.1)
@@ -85,6 +91,8 @@ class TerminalClient(SockJSConnection):
             self.mp.resize(self.rows, self.cols)
 
     def on_close(self):
+        if not self.list_command:
+            self.mp.terminate()
         pass
 
     def send_new_data(self, stream=None):
