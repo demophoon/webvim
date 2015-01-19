@@ -8,20 +8,18 @@
     <link href='http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
 
     <style>
-        html {
+        html, body {
             background: #121212;
             padding: 0px;
             margin: 0px;
             overflow: hidden;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-            font: 20px/1.5 sans-serif;
+            height: 100%;
+            width: 100%;
         }
 
         .terminal {
-            padding: 5px;
+            padding: 0px;
+            margin: 0px;
             font-family: "Ubuntu Mono", "DejaVu Sans Mono", "Liberation Mono", monospace;
             font-size: 16px;
             color: #f0f0f0;
@@ -33,6 +31,9 @@
         }
 
         div#vim_terminal {
+            margin: 16px;
+            height: 100%;
+            width: 100%;
             display: inline-block;
             white-space: pre !important;
         }
@@ -71,7 +72,7 @@
                     sock = new SockJS('/terminal');
                     sock.onopen = function() {
                         sock.ready = true;
-                        //term.fixResize();
+                        term.fixResize();
                         setTimeout(term.fixResize, 100);
                     };
                     sock.onmessage = function(e) {
@@ -89,13 +90,46 @@
 
                 }
 
-                function init() {
+                function get_text_size(element) {
+                    if (element == null) {
+                        element = $("body");
+                    }
+                    var x = $("<span>#</span>").addClass("terminal").css("padding", "0px").css("margin", "0px");
+                    element.append(x);
+                    size_obj = {
+                        width: x[0].getBoundingClientRect().width,
+                        height: x[0].getBoundingClientRect().height,
+                    }
+                    x.remove();
+                    return size_obj;
+                }
+
+                function get_element_sizes(element) {
+                    var w_margins = element.outerWidth(true) - element.innerWidth();
+                    var h_margins = element.outerHeight(true) - element.innerHeight();
+                    var width = element.width() - w_margins;
+                    var height = element.height() - h_margins;
+                    var font_size = get_text_size(element);
+                    var col_size = Math.floor(width / font_size.width);
+                    var row_size = Math.floor(height / font_size.height);
+                    return {
+                        cols: col_size,
+                        rows: row_size,
+                        height: height,
+                        width: width,
+                    }
+                }
+
+                function init(term_id) {
+                    var jquery_element = $(term_id)
+                    var html_element = jquery_element[0];
+                    var sizes = get_element_sizes(jquery_element);
                     term = new Terminal({
-                        cols: Math.floor((window.innerWidth - 10) / 8) - 2,
-                        rows: Math.floor((window.innerHeight - 10) / 16),
+                        cols: sizes.cols,
+                        rows: sizes.rows,
                         screenKeys: true,
                     });
-                    term.open(document.getElementById("vim_terminal"));
+                    term.open(html_element);
                     term.on('data', function(data) {
                         sock.send("0" + data);
                         setTimeout(function() {
@@ -108,13 +142,13 @@
                         sock.send("1" + x + "," + y);
                     }
                     term.fixResize = function() {
-                        var cols = Math.floor((window.innerWidth - 10) / 8) - 2;
-                        var rows = Math.floor((window.innerHeight - 10) / 16);
-                        term.resize(cols, rows)
+                        var font_size = get_text_size(jquery_element);
+                        var sizes = get_element_sizes(jquery_element);
+                        term.resize(sizes.cols, sizes.rows);
                     }
                     term.urlify = function() {
                         if (Browser.isIE) { return; };
-                        $("span").each(function(inxex, element) {
+                        $("span").each(function(index, element) {
                             if (element.innerText.indexOf("|") == -1) {
                                 element.innerHTML = element.innerText.autoLink({target: "_blank"});
                             }
@@ -165,7 +199,7 @@
                 console.log("https://github.com/demophoon/webvim");
                 console.log("Also don't forget to check out my website! http://www.brittg.com/ Thanks :) -- Britt Gresham");
                 console.log("====================================");
-                $(document).ready(init);
+                $(document).ready(function(){init("#vim_terminal")});
             }());
 
         </script>
