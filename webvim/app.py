@@ -11,8 +11,11 @@ from assets.websocket import TerminalClient
 class EntrypointHandler(web.RequestHandler):
 
     def get(self):
-        if not TerminalClient.is_alive(self.get_cookie("term")):
+        term = self.get_cookie("term")
+        if term and not TerminalClient.is_alive(term):
             self.clear_cookie("term")
+            self.set_cookie("term", TerminalClient.create_session())
+        elif not term:
             self.set_cookie("term", TerminalClient.create_session())
         self.render("templates/terminal.html")
 
