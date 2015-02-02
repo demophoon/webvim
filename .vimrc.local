@@ -1,0 +1,14 @@
+echom "Sourced .vimrc.local"
+
+nmap <Left> <Left>
+nmap <Up> <Up>
+nmap <Right> <Right>
+nmap <Down> <Down>
+imap <Left> <Left>
+imap <Up> <Up>
+imap <Right> <Right>
+imap <Down> <Down>
+
+set mouse=a
+
+let NERDTreeDirArrows=0
