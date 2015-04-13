@@ -22,6 +22,8 @@ class TerminalClient(SockJSConnection):
 
     @classmethod
     def is_alive(self, session_id):
+        if not session_id:
+            return False
         if self.list_command:
             return any([x.startswith(session_id) for x in self.list_containers()])
         else:
