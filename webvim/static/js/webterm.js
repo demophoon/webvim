@@ -1,11 +1,28 @@
-var Webterm = function(api_endpoint, init_element) {
+var Webterm = function(api_endpoint, init_element, options) {
     var sock;
     var term;
     var connected = false;
+    default_options = {
+        session_id: null,
+        scale: true,
+        height: null,
+        width: null,
+        rows: null,
+        columns: null,
+    };
+    if (options == null) {
+        options = {};
+    }
+    options = jQuery.extend(default_options, options);
 
     function connect_to_ws() {
         sock = new SockJS(api_endpoint);
         sock.onopen = function() {
+            if (options.session_id) {
+                sock.send("c" + options.session_id);
+            } else {
+                sock.send('c');
+            }
             sock.ready = true;
             term.fixResize();
         };
@@ -48,6 +65,14 @@ var Webterm = function(api_endpoint, init_element) {
     }
 
     function get_element_sizes(element) {
+        if (!options.scale) {
+            return {
+                cols: options.columns,
+                rows: options.rows,
+                height: options.height,
+                width: options.width,
+            }
+        }
         var w_margins = element.outerWidth(true) - element.innerWidth();
         var h_margins = element.outerHeight(true) - element.innerHeight();
         var width = element.width() - w_margins;
@@ -61,6 +86,10 @@ var Webterm = function(api_endpoint, init_element) {
             height: height,
             width: width,
         }
+    }
+
+    function raw_send(msg) {
+        sock.send(msg);
     }
 
     function send_char_to_terminal(x) {
@@ -134,5 +163,7 @@ var Webterm = function(api_endpoint, init_element) {
     console.log(term);
     return {
         send: send_char_to_terminal,
+        options: options,
+        raw_send: raw_send,
     };
 };

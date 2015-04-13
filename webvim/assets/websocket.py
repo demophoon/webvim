@@ -44,6 +44,7 @@ class TerminalClient(SockJSConnection):
     def __init__(self, *args, **kwargs):
         self.rows = 24
         self.cols = 80
+        self.connected = False
         SockJSConnection.__init__(self, *args, **kwargs)
 
     # Required Functions
@@ -52,14 +53,13 @@ class TerminalClient(SockJSConnection):
         if self.mp.term.rows != self.rows or self.mp.term.cols != self.cols:
             self.mp.resize(self.rows, self.cols)
 
-    def on_open(self, info):
-        self.session_id = info.get_cookie("term").value
-        if self.session_id == "sandbox":
+    def open_terminal(self):
+        if not self.session_id:
             self.session_id = self.create_session()
-        self.last_update = time.time()
         if not self.is_alive(self.session_id):
-            self.close()
-            return
+            self.session_id = self.create_session()
+
+        self.last_update = time.time()
         try:
             connecting_command = self.connect_command % self.session_id
         except TypeError:
@@ -78,21 +78,41 @@ class TerminalClient(SockJSConnection):
 
         self.mp.term.add_callback(terminal.CALLBACK_CHANGED, self.resize_check)
 
-        while not self.mp.isalive():
-            time.sleep(.1)
-        pass
+        for _ in range(50):
+            if not self.mp.isalive():
+                time.sleep(.1)
+            else:
+                break
+
+        self.connected = True
+
+    def on_open(self, info):
+        self.session_id = info.get_cookie("term")
+        if self.session_id:
+            self.session_id = self.session_id.value
+        if self.session_id == "sandbox":
+            self.session_id = self.create_session()
 
     def on_message(self, message):
         self.last_update = time.time()
-        if not self.mp.isalive():
+        header = message[0]
+        data = message[1:]
+        if self.connected and not self.mp.isalive():
             self.close()
-        if message[0] == "0":
-            self.mp.write(unicode(message[1:]))
-        if message[0] == "1":
-            items = message[1:].split(",")
+        # Send character(s) to terminal
+        if self.connected and header == '0':
+            self.mp.write(unicode(data))
+        # Resize Terminal
+        elif self.connected and header == '1':
+            items = data.split(',')
             self.cols = int(items[0])
             self.rows = int(items[1])
             self.mp.resize(self.rows, self.cols)
+        # Connect to terminal
+        elif not self.connected and header == 'c':
+            if data:
+                self.session_id = data
+            self.open_terminal()
 
     def on_close(self):
         if not self.list_command:
