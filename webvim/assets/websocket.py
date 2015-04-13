@@ -6,6 +6,7 @@ from sockjs.tornado import SockJSConnection
 
 import terminal
 import termio
+import exceptions
 
 
 class TerminalClient(SockJSConnection):
@@ -37,7 +38,8 @@ class TerminalClient(SockJSConnection):
             while not self.is_alive(container_id):
                 time.sleep(.1)
             return container_id
-        return None
+        else:
+            raise exceptions.CommandException(*status)
 
     def __init__(self, *args, **kwargs):
         self.rows = 24

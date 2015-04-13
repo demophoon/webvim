@@ -6,18 +6,22 @@ from sockjs.tornado import SockJSRouter
 from tornado import web, ioloop
 
 from assets.websocket import TerminalClient
+from assets.exceptions import CommandException
 
 
 class EntrypointHandler(web.RequestHandler):
 
     def get(self):
         term = self.get_cookie("term")
-        if term and not TerminalClient.is_alive(term):
-            self.clear_cookie("term")
-            self.set_cookie("term", TerminalClient.create_session())
-        elif not term:
-            self.set_cookie("term", TerminalClient.create_session())
-        self.render("templates/terminal.html")
+        try:
+            if term and not TerminalClient.is_alive(term):
+                self.clear_cookie("term")
+                self.set_cookie("term", TerminalClient.create_session())
+            elif not term:
+                self.set_cookie("term", TerminalClient.create_session())
+            self.render("templates/terminal.html")
+        except CommandException as e:
+            self.write(str(e))
 
 
 def main():
