@@ -1,18 +1,12 @@
 ================================================================================
 
-                           Britt Gresham's Sexy Vimrc
-                               http://brittg.sexy
-
-               ___       _  _    _
-              | _ ) _ _ (_)| |_ | |_  __ _     ___ ___ __ __ _  _
-              | _ \| '_|| ||  _||  _|/ _` | _ (_-</ -_)\ \ /| || |
-              |___/|_|  |_| \__| \__|\__, |(_)/__/\___|/_\_\ \_, |
-                                     |___/                   |__/
+                         Britt Gresham's Awesome Vimrc
+                             http://vim.brittg.com
 
 ================================================================================
 
-Welcome to http://brittg.sexy!
-This is where I am able to show off my completely sexy Vim configuration!
+Welcome to http://vim.brittg.com!
+This is where I am able to show off my completely awesome Vim configuration!
 
 Now I realize that some of you are not well-versed in Vim so I have turned on
 some helpful options like navigating the page with your arrow keys instead of
